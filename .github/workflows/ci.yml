@@ -13,6 +13,8 @@ jobs:
       changed_services: ${{ steps.set-changes.outputs.changed_services }}
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
       - name: Detect changed services
         id: set-changes
         run: |
@@ -45,6 +47,8 @@ jobs:
         service: [spring-petclinic-vets-service,spring-petclinic-customers-service,spring-petclinic-visits-service,spring-petclinic-admin-server,spring-petclinic-api-gateway,spring-petclinic-config-server,spring-petclinic-genai-service,spring-petclinic-discovery-server]
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
       # Remove shell-based service check, rely on matrix and workflow expressions only
       - name: Set up JDK 17
         if: contains(needs.detect-changes.outputs.changed_services, matrix.service)
