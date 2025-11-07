@@ -59,9 +59,15 @@ jobs:
       - name: Check Coverage > 70%
         if: contains(needs.detect-changes.outputs.changed_services, matrix.service) && matrix.service != 'spring-petclinic-admin-server' && matrix.service != 'spring-petclinic-genai-service'
         run: |
-          COVERAGE=$(xmllint --xpath "string(//counter[@type='INSTRUCTION']/@covered)" ${{ matrix.service }}/target/site/jacoco/jacoco.xml)
-          TOTAL=$(xmllint --xpath "string(//counter[@type='INSTRUCTION']/@missed)" ${{ matrix.service }}/target/site/jacoco/jacoco.xml)
-          PERCENT=$((COVERAGE * 100 / (COVERAGE + TOTAL)))
+          LINE=$(grep 'counter type="INSTRUCTION"' ${{ matrix.service }}/target/site/jacoco/jacoco.xml | head -1)
+          COVERED=$(echo "$LINE" | grep -oP 'covered="\K\d+')
+          MISSED=$(echo "$LINE" | grep -oP 'missed="\K\d+')
+          TOTAL=$((COVERED + MISSED))
+          if [ "$TOTAL" -eq 0 ]; then
+            PERCENT=0
+          else
+            PERCENT=$((COVERED * 100 / TOTAL))
+          fi
           echo "Coverage: $PERCENT%"
           if [ "$PERCENT" -lt 70 ]; then
             echo "Coverage $PERCENT% is less than 70%"
