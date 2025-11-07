@@ -40,30 +40,24 @@ jobs:
         service: [spring-petclinic-vets-service,spring-petclinic-customers-service,spring-petclinic-visits-service,spring-petclinic-admin-server,spring-petclinic-api-gateway,spring-petclinic-config-server,spring-petclinic-genai-service,spring-petclinic-discovery-server]
     steps:
       - uses: actions/checkout@v3
-      - name: Check if service changed
-        id: svc-check
-        run: |
-          if echo "${{ needs.detect-changes.outputs.changed_services }}" | grep -q "${{ matrix.service }}"; then
-            echo "run_service=true" >> $GITHUB_OUTPUT
-          else
-            echo "run_service=false" >> $GITHUB_OUTPUT
+      # Remove shell-based service check, rely on matrix and workflow expressions only
       - name: Set up JDK 17
-        if: steps.svc-check.outputs.run_service == 'true'
+        if: contains(needs.detect-changes.outputs.changed_services, matrix.service)
         uses: actions/setup-java@v3
         with:
           java-version: '17'
           distribution: 'temurin'
       - name: Validate
-        if: steps.svc-check.outputs.run_service == 'true'
+        if: contains(needs.detect-changes.outputs.changed_services, matrix.service)
         run: cd ${{ matrix.service }} && mvn validate
       - name: Build
-        if: steps.svc-check.outputs.run_service == 'true'
+        if: contains(needs.detect-changes.outputs.changed_services, matrix.service)
         run: ./mvnw -pl ${{ matrix.service }} -am clean compile
       - name: Test & Coverage
-        if: steps.svc-check.outputs.run_service == 'true' && matrix.service != 'spring-petclinic-admin-server' && matrix.service != 'spring-petclinic-genai-service'
+        if: contains(needs.detect-changes.outputs.changed_services, matrix.service) && matrix.service != 'spring-petclinic-admin-server' && matrix.service != 'spring-petclinic-genai-service'
         run: ./mvnw -pl ${{ matrix.service }} test jacoco:report
       - name: Check Coverage > 70%
-        if: steps.svc-check.outputs.run_service == 'true' && matrix.service != 'spring-petclinic-admin-server' && matrix.service != 'spring-petclinic-genai-service'
+        if: contains(needs.detect-changes.outputs.changed_services, matrix.service) && matrix.service != 'spring-petclinic-admin-server' && matrix.service != 'spring-petclinic-genai-service'
         run: |
           COVERAGE=$(xmllint --xpath "string(//counter[@type='INSTRUCTION']/@covered)" ${{ matrix.service }}/target/site/jacoco/jacoco.xml)
           TOTAL=$(xmllint --xpath "string(//counter[@type='INSTRUCTION']/@missed)" ${{ matrix.service }}/target/site/jacoco/jacoco.xml)
@@ -73,7 +67,7 @@ jobs:
             echo "Coverage $PERCENT% is less than 70%"
             exit 1
       - name: Archive JAR
-        if: steps.svc-check.outputs.run_service == 'true'
+        if: contains(needs.detect-changes.outputs.changed_services, matrix.service)
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.service }}-jar
