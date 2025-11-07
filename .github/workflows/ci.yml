@@ -17,18 +17,18 @@ jobs:
         id: set-changes
         run: |
           SERVICES="spring-petclinic-vets-service spring-petclinic-customers-service spring-petclinic-visits-service spring-petclinic-admin-server spring-petclinic-api-gateway spring-petclinic-config-server spring-petclinic-genai-service spring-petclinic-discovery-server"
-          # Try to diff with github.event.before, fallback to HEAD~1 if not valid
-          if [ -z "${{ github.event.before }}" ] || ! git cat-file -e ${{ github.event.before }} 2>/dev/null; then
-            CHANGED=$(git diff --name-only HEAD~1)
+          # If no previous commit, build all services
+          if [ -z "${{ github.event.before }}" ] || ! git cat-file -e ${{ github.event.before }} 2>/dev/null || ! git rev-parse HEAD~1 2>/dev/null; then
+            CHANGED_SERVICES="$SERVICES"
           else
             CHANGED=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }})
+            CHANGED_SERVICES=""
+            for SVC in $SERVICES; do
+              if echo "$CHANGED" | grep -q "^$SVC/"; then
+                CHANGED_SERVICES="$CHANGED_SERVICES $SVC"
+              fi
+            done
           fi
-          CHANGED_SERVICES=""
-          for SVC in $SERVICES; do
-            if echo "$CHANGED" | grep -q "^$SVC/"; then
-              CHANGED_SERVICES="$CHANGED_SERVICES $SVC"
-            fi
-          done
           echo "changed_services=${CHANGED_SERVICES}" >> $GITHUB_OUTPUT
 
   build-test-verify:
