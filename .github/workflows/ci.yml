@@ -1,0 +1,75 @@
+name: CI Petclinic Microservices
+
+on:
+  push:
+    branches: [main, develop, feature/**]
+  pull_request:
+    branches: [main, develop, feature/**]
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      changed_services: ${{ steps.set-changes.outputs.changed_services }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Detect changed services
+        id: set-changes
+        run: |
+          SERVICES="spring-petclinic-vets-service spring-petclinic-customers-service spring-petclinic-visits-service spring-petclinic-admin-server spring-petclinic-api-gateway spring-petclinic-config-server spring-petclinic-genai-service spring-petclinic-discovery-server"
+          CHANGED=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }})
+          CHANGED_SERVICES=""
+          for SVC in $SERVICES; do
+            if echo "$CHANGED" | grep -q "^$SVC/"; then
+              CHANGED_SERVICES="$CHANGED_SERVICES $SVC"
+            fi
+          done
+          echo "changed_services=${CHANGED_SERVICES}" >> $GITHUB_OUTPUT
+
+  build-test-verify:
+    needs: detect-changes
+    runs-on: ubuntu-latest
+    if: needs.detect-changes.outputs.changed_services != ''
+    strategy:
+      matrix:
+        service: [spring-petclinic-vets-service,spring-petclinic-customers-service,spring-petclinic-visits-service,spring-petclinic-admin-server,spring-petclinic-api-gateway,spring-petclinic-config-server,spring-petclinic-genai-service,spring-petclinic-discovery-server]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Check if service changed
+        id: svc-check
+        run: |
+          if echo "${{ needs.detect-changes.outputs.changed_services }}" | grep -q "${{ matrix.service }}"; then
+            echo "run_service=true" >> $GITHUB_OUTPUT
+          else
+            echo "run_service=false" >> $GITHUB_OUTPUT
+      - name: Set up JDK 17
+        if: steps.svc-check.outputs.run_service == 'true'
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+      - name: Validate
+        if: steps.svc-check.outputs.run_service == 'true'
+        run: cd ${{ matrix.service }} && mvn validate
+      - name: Build
+        if: steps.svc-check.outputs.run_service == 'true'
+        run: ./mvnw -pl ${{ matrix.service }} -am clean compile
+      - name: Test & Coverage
+        if: steps.svc-check.outputs.run_service == 'true' && !contains(matrix.service, 'admin-server') && !contains(matrix.service, 'genai-service')
+        run: ./mvnw -pl ${{ matrix.service }} test jacoco:report
+      - name: Check Coverage > 70%
+        if: steps.svc-check.outputs.run_service == 'true' && !contains(matrix.service, 'admin-server') && !contains(matrix.service, 'genai-service')
+        run: |
+          COVERAGE=$(xmllint --xpath "string(//counter[@type='INSTRUCTION']/@covered)" ${{ matrix.service }}/target/site/jacoco/jacoco.xml)
+          TOTAL=$(xmllint --xpath "string(//counter[@type='INSTRUCTION']/@missed)" ${{ matrix.service }}/target/site/jacoco/jacoco.xml)
+          PERCENT=$((COVERAGE * 100 / (COVERAGE + TOTAL)))
+          echo "Coverage: $PERCENT%"
+          if [ "$PERCENT" -lt 70 ]; then
+            echo "Coverage $PERCENT% is less than 70%"
+            exit 1
+      - name: Archive JAR
+        if: steps.svc-check.outputs.run_service == 'true'
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.service }}-jar
+          path: ${{ matrix.service }}/target/*.jar
