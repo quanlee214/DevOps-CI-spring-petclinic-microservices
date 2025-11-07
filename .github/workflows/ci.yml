@@ -59,9 +59,8 @@ jobs:
       - name: Check Coverage > 70%
         if: contains(needs.detect-changes.outputs.changed_services, matrix.service) && matrix.service != 'spring-petclinic-admin-server' && matrix.service != 'spring-petclinic-genai-service'
         run: |
-          LINE=$(grep 'counter type="INSTRUCTION"' ${{ matrix.service }}/target/site/jacoco/jacoco.xml | head -1)
-          COVERED=$(echo "$LINE" | grep -oP 'covered="\K\d+')
-          MISSED=$(echo "$LINE" | grep -oP 'missed="\K\d+')
+          COVERED=$(grep -oP 'covered="\K\d+' ${{ matrix.service }}/target/site/jacoco/jacoco.xml | head -1)
+          MISSED=$(grep -oP 'missed="\K\d+' ${{ matrix.service }}/target/site/jacoco/jacoco.xml | head -1)
           TOTAL=$((COVERED + MISSED))
           if [ "$TOTAL" -eq 0 ]; then
             PERCENT=0
