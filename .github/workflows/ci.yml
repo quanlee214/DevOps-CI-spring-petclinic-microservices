@@ -60,10 +60,10 @@ jobs:
         if: steps.svc-check.outputs.run_service == 'true'
         run: ./mvnw -pl ${{ matrix.service }} -am clean compile
       - name: Test & Coverage
-        if: steps.svc-check.outputs.run_service == 'true' && !contains(matrix.service, 'admin-server') && !contains(matrix.service, 'genai-service')
+        if: steps.svc-check.outputs.run_service == 'true' && matrix.service != 'spring-petclinic-admin-server' && matrix.service != 'spring-petclinic-genai-service'
         run: ./mvnw -pl ${{ matrix.service }} test jacoco:report
       - name: Check Coverage > 70%
-        if: steps.svc-check.outputs.run_service == 'true' && !contains(matrix.service, 'admin-server') && !contains(matrix.service, 'genai-service')
+        if: steps.svc-check.outputs.run_service == 'true' && matrix.service != 'spring-petclinic-admin-server' && matrix.service != 'spring-petclinic-genai-service'
         run: |
           COVERAGE=$(xmllint --xpath "string(//counter[@type='INSTRUCTION']/@covered)" ${{ matrix.service }}/target/site/jacoco/jacoco.xml)
           TOTAL=$(xmllint --xpath "string(//counter[@type='INSTRUCTION']/@missed)" ${{ matrix.service }}/target/site/jacoco/jacoco.xml)
