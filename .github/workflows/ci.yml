@@ -20,6 +20,7 @@ jobs:
           # If no previous commit, build all services
           if [ -z "${{ github.event.before }}" ] || ! git cat-file -e ${{ github.event.before }} 2>/dev/null || ! git rev-parse HEAD~1 2>/dev/null; then
             CHANGED_SERVICES="$SERVICES"
+            echo "No previous commit detected. All services will be built: $CHANGED_SERVICES"
           else
             CHANGED=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }})
             CHANGED_SERVICES=""
@@ -28,6 +29,11 @@ jobs:
                 CHANGED_SERVICES="$CHANGED_SERVICES $SVC"
               fi
             done
+            if [ -z "$CHANGED_SERVICES" ]; then
+              echo "No service changes detected."
+            else
+              echo "Detected changed services: $CHANGED_SERVICES"
+            fi
           fi
           echo "changed_services=${CHANGED_SERVICES}" >> $GITHUB_OUTPUT
 
