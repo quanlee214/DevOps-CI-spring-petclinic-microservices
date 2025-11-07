@@ -71,6 +71,9 @@ jobs:
           if [ "$PERCENT" -lt 70 ]; then
             echo "Coverage $PERCENT% is less than 70%"
             exit 1
+          else
+            exit 0
+          fi
       - name: Archive JAR
         if: contains(needs.detect-changes.outputs.changed_services, matrix.service)
         uses: actions/upload-artifact@v4
