@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.reactive.function.client.WebClient;
 
 /**
- * A Configuration class for beans used by the Chat Client.
+ * A Configuration class for beans used by the Chat Client. Test
  *
  * @author Oded Shopen
  */
