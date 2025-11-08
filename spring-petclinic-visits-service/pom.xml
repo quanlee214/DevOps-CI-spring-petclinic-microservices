@@ -22,7 +22,7 @@
     <dependencies>
         <!-- Spring Boot 123 -->
         <dependency>
-            <groupId>org.springframework.boot</groupId>
+            <groupId>org.springframework.boot<
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
         <dependency>
