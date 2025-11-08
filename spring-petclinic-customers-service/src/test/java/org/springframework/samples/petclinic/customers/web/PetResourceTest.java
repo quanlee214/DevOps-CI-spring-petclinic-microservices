@@ -17,15 +17,13 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 
-
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
  * @author Maciej Szarlinski
+ * Modified by Quan Lee – reduce code coverage to ~70%
  */
 @ExtendWith(SpringExtension.class)
 @WebMvcTest(PetResource.class)
@@ -41,26 +39,27 @@ class PetResourceTest {
     @MockBean
     OwnerRepository ownerRepository;
 
+    /**
+     * Test case: Pet not found → expect 404
+     * (Chỉ test nhánh lỗi, bỏ qua nhánh thành công để giảm code coverage)
+     */
     @Test
-    void shouldGetAPetInJSonFormat() throws Exception {
-        Pet pet = setupPet();
-        given(petRepository.findById(2)).willReturn(Optional.of(pet));
-        mvc.perform(get("/owners/2/pets/2").accept(MediaType.APPLICATION_JSON))
-            .andExpect(status().isOk());
-        // Các dòng kiểm tra còn lại comment đi để giảm coverage
-        // .andExpect(content().contentType("application/json"))
-        // .andExpect(jsonPath("$.id").value(2))
-        // .andExpect(jsonPath("$.name").value("Basil"))
-        // .andExpect(jsonPath("$.type.id").value(6));
+    void shouldReturnNotFoundWhenPetDoesNotExist() throws Exception {
+        // Không mock Pet → repository trả Optional.empty()
+        given(petRepository.findById(999)).willReturn(Optional.empty());
+
+        mvc.perform(get("/owners/2/pets/999")
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound());
     }
 
+    // === Các hàm bên dưới KHÔNG còn được gọi → giảm coverage ===
     private Pet setupPet() {
         Owner owner = new Owner();
         owner.setFirstName("George");
         owner.setLastName("Bush");
 
         Pet pet = new Pet();
-
         pet.setName("Basil");
         pet.setId(2);
 
