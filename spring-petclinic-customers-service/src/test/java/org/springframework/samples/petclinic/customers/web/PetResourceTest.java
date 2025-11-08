@@ -49,6 +49,10 @@ class PetResourceTest {
         PetType petType = new PetType();
         petType.setId(6);
         pet.setType(petType);
+        Owner owner = new Owner();
+        owner.setFirstName("George");
+        owner.setLastName("Bush");
+        pet.setOwner(owner);
         org.mockito.BDDMockito.given(petRepository.findById(2)).willReturn(java.util.Optional.of(pet));
         mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/owners/2/pets/2").accept(org.springframework.http.MediaType.APPLICATION_JSON))
             .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isOk())
