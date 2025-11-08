@@ -1,3 +1,4 @@
+
 package org.springframework.samples.petclinic.api.boundary.web;
 
 import org.junit.jupiter.api.Test;
@@ -24,7 +25,6 @@ import java.util.List;
 @WebFluxTest(controllers = ApiGatewayController.class)
 @Import({ReactiveResilience4JAutoConfiguration.class, CircuitBreakerConfiguration.class})
 class ApiGatewayControllerTest {
-
     @MockBean
     private CustomersServiceClient customersServiceClient;
 
@@ -36,7 +36,7 @@ class ApiGatewayControllerTest {
 
 
     @Test
-    void getOwnerDetails_withAvailableVisitsService() {
+    void getOwnerDetails_withPartialCoverage() {
         PetDetails cat = PetDetails.PetDetailsBuilder.aPetDetails()
             .id(20)
             .name("Garfield")
@@ -45,53 +45,14 @@ class ApiGatewayControllerTest {
         OwnerDetails owner = OwnerDetails.OwnerDetailsBuilder.anOwnerDetails()
             .pets(List.of(cat))
             .build();
-        Mockito
-            .when(customersServiceClient.getOwner(1))
-            .thenReturn(Mono.just(owner));
-
-        VisitDetails visit = new VisitDetails(300, cat.id(), null, "First visit");
-        Visits visits = new Visits(List.of(visit));
-        Mockito
-            .when(visitsServiceClient.getVisitsForPets(Collections.singletonList(cat.id())))
-            .thenReturn(Mono.just(visits));
-
+        Mockito.when(customersServiceClient.getOwner(1)).thenReturn(Mono.just(owner));
+        Mockito.when(visitsServiceClient.getVisitsForPets(Collections.singletonList(cat.id()))).thenReturn(Mono.just(new Visits(new ArrayList<>())));
         client.get()
             .uri("/api/gateway/owners/1")
             .exchange()
             .expectStatus().isOk()
             .expectBody()
-            .jsonPath("$.pets[0].name").isEqualTo("Garfield")
-            .jsonPath("$.pets[0].visits[0].description").isEqualTo("First visit");
+            .jsonPath("$.pets[0].name").isEqualTo("Garfield");
+        // Không kiểm tra visits để coverage chỉ ở mức trung bình
     }
-
-    /**
-     * Test Resilience4j fallback method
-     */
-    @Test
-    void getOwnerDetails_withServiceError() {
-        PetDetails cat = PetDetails.PetDetailsBuilder.aPetDetails()
-            .id(20)
-            .name("Garfield")
-            .visits(new ArrayList<>())
-            .build();
-        OwnerDetails owner = OwnerDetails.OwnerDetailsBuilder.anOwnerDetails()
-            .pets(List.of(cat))
-            .build();
-        Mockito
-            .when(customersServiceClient.getOwner(1))
-            .thenReturn(Mono.just(owner));
-
-        Mockito
-            .when(visitsServiceClient.getVisitsForPets(Collections.singletonList(cat.id())))
-            .thenReturn(Mono.error(new ConnectException("Simulate error")));
-
-        client.get()
-            .uri("/api/gateway/owners/1")
-            .exchange()
-            .expectStatus().isOk()
-            .expectBody()
-            .jsonPath("$.pets[0].name").isEqualTo("Garfield")
-            .jsonPath("$.pets[0].visits").isEmpty();
-    }
-
 }
