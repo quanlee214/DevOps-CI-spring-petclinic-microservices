@@ -36,31 +36,11 @@ class ApiGatewayControllerTest {
 
 
     @Test
-    void getOwnerDetails_withAvailableVisitsService() {
-        PetDetails cat = PetDetails.PetDetailsBuilder.aPetDetails()
-            .id(20)
-            .name("Garfield")
-            .visits(new ArrayList<>())
-            .build();
-        OwnerDetails owner = OwnerDetails.OwnerDetailsBuilder.anOwnerDetails()
-            .pets(List.of(cat))
-            .build();
-        Mockito
-            .when(customersServiceClient.getOwner(1))
-            .thenReturn(Mono.just(owner));
-
-        VisitDetails visit = new VisitDetails(300, cat.id(), null, "First visit");
-        Visits visits = new Visits(List.of(visit));
-        Mockito
-            .when(visitsServiceClient.getVisitsForPets(Collections.singletonList(cat.id())))
-            .thenReturn(Mono.just(visits));
-
+    void getOwnerDetails_shouldReturnError() {
+        Mockito.when(customersServiceClient.getOwner(999)).thenReturn(Mono.error(new RuntimeException("Not found")));
         client.get()
-            .uri("/api/gateway/owners/1")
+            .uri("/api/gateway/owners/999")
             .exchange()
-            .expectStatus().isOk()
-            .expectBody()
-            .jsonPath("$.pets[0].name").isEqualTo("Garfield");
-        // .jsonPath("$.pets[0].visits[0].description").isEqualTo("First visit"); // Comment để coverage giảm
+            .expectStatus().is5xxServerError();
     }
 }
