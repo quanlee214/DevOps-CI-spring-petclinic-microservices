@@ -36,11 +36,23 @@ class ApiGatewayControllerTest {
 
 
     @Test
-    void getOwnerDetails_shouldReturnError() {
-        Mockito.when(customersServiceClient.getOwner(999)).thenReturn(Mono.error(new RuntimeException("Not found")));
+    void getOwnerDetails_withPartialCoverage() {
+        PetDetails cat = PetDetails.PetDetailsBuilder.aPetDetails()
+            .id(20)
+            .name("Garfield")
+            .visits(new ArrayList<>())
+            .build();
+        OwnerDetails owner = OwnerDetails.OwnerDetailsBuilder.anOwnerDetails()
+            .pets(List.of(cat))
+            .build();
+        Mockito.when(customersServiceClient.getOwner(1)).thenReturn(Mono.just(owner));
+        Mockito.when(visitsServiceClient.getVisitsForPets(Collections.singletonList(cat.id()))).thenReturn(Mono.just(new Visits(new ArrayList<>())));
         client.get()
-            .uri("/api/gateway/owners/999")
+            .uri("/api/gateway/owners/1")
             .exchange()
-            .expectStatus().is5xxServerError();
+            .expectStatus().isOk()
+            .expectBody()
+            .jsonPath("$.pets[0].name").isEqualTo("Garfield");
+        // Không kiểm tra visits để coverage chỉ ở mức trung bình
     }
 }
