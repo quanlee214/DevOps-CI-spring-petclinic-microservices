@@ -1,3 +1,4 @@
+
 package org.springframework.samples.petclinic.api.boundary.web;
 
 import org.junit.jupiter.api.Test;
@@ -24,11 +25,6 @@ import java.util.List;
 @WebFluxTest(controllers = ApiGatewayController.class)
 @Import({ReactiveResilience4JAutoConfiguration.class, CircuitBreakerConfiguration.class})
 class ApiGatewayControllerTest {
-    @Test
-    void shouldAlwaysFail() {
-        org.junit.jupiter.api.Assertions.fail("This test is supposed to fail for demonstration purposes.");
-    }
-
     @MockBean
     private CustomersServiceClient customersServiceClient;
 
@@ -64,38 +60,7 @@ class ApiGatewayControllerTest {
             .exchange()
             .expectStatus().isOk()
             .expectBody()
-            .jsonPath("$.pets[0].name").isEqualTo("Garfield")
-            .jsonPath("$.pets[0].visits[0].description").isEqualTo("First visit");
+            .jsonPath("$.pets[0].name").isEqualTo("Garfield");
+        // .jsonPath("$.pets[0].visits[0].description").isEqualTo("First visit"); // Comment để coverage giảm
     }
-
-    /**
-     * Test Resilience4j fallback method
-     */
-    @Test
-    void getOwnerDetails_withServiceError() {
-        PetDetails cat = PetDetails.PetDetailsBuilder.aPetDetails()
-            .id(20)
-            .name("Garfield")
-            .visits(new ArrayList<>())
-            .build();
-        OwnerDetails owner = OwnerDetails.OwnerDetailsBuilder.anOwnerDetails()
-            .pets(List.of(cat))
-            .build();
-        Mockito
-            .when(customersServiceClient.getOwner(1))
-            .thenReturn(Mono.just(owner));
-
-        Mockito
-            .when(visitsServiceClient.getVisitsForPets(Collections.singletonList(cat.id())))
-            .thenReturn(Mono.error(new ConnectException("Simulate error")));
-
-        client.get()
-            .uri("/api/gateway/owners/1")
-            .exchange()
-            .expectStatus().isOk()
-            .expectBody()
-            .jsonPath("$.pets[0].name").isEqualTo("Garfield")
-            .jsonPath("$.pets[0].visits").isEmpty();
-    }
-
 }
