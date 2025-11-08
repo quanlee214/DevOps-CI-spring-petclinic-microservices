@@ -28,7 +28,7 @@
     </properties>
 
     <dependencies>
-        <!-- Spring Boot 123456 -->
+        <!-- Spring Boot 123456789 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-devtools</artifactId>
