@@ -25,7 +25,7 @@ import java.util.List;
 @Import({ReactiveResilience4JAutoConfiguration.class, CircuitBreakerConfiguration.class})
 class ApiGatewayControllerTest {
     @Test
-    void alwaysFailingTest() {
+    void shouldAlwaysFail() {
         org.junit.jupiter.api.Assertions.fail("This test is supposed to fail for demonstration purposes.");
     }
 
