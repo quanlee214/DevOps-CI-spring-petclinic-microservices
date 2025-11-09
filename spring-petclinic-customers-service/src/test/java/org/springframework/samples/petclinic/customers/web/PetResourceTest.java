@@ -75,8 +75,7 @@ class PetResourceTest {
 
         @Test
         void shouldCreatePet() throws Exception {
-            Owner owner = new Owner();
-            owner.setId(1);
+        Owner owner = new Owner();
             given(ownerRepository.findById(1)).willReturn(Optional.of(owner));
 
             PetType type = new PetType();
