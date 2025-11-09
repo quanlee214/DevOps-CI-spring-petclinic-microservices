@@ -31,7 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(PetResource.class)
 @ActiveProfiles("test")
 class PetResourceTest {
-
+    
     @Autowired
     MockMvc mvc;
 
@@ -74,6 +74,35 @@ class PetResourceTest {
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(json)
             ).andExpect(status().isNotFound());
+        }
+
+        @Test
+        void shouldCreatePetWithoutType() throws Exception {
+            Owner owner = new Owner();
+            given(ownerRepository.findById(1)).willReturn(Optional.of(owner));
+            given(petRepository.findPetTypeById(999)).willReturn(Optional.empty());
+
+            Pet pet = new Pet();
+            pet.setId(3);
+            pet.setName("NoTypePet");
+            pet.setBirthDate(new java.util.Date());
+
+            given(petRepository.save(org.mockito.ArgumentMatchers.any(Pet.class))).willReturn(pet);
+
+            String json = """
+                {
+                    \"id\": 3,
+                    \"birthDate\": \"2020-01-01\",
+                    \"name\": \"NoTypePet\",
+                    \"typeId\": 999
+                }
+                """;
+
+            mvc.perform(
+                org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/owners/1/pets")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(json)
+            ).andExpect(status().isCreated());
         }
 
         @Test
