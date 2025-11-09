@@ -1,5 +1,9 @@
+
 package org.springframework.samples.petclinic.vets.system;
 
+import org.springframework.stereotype.Component;
+
+@Component
 public class UnusedCoverageDropper {
     // 50 methods, none are called in tests
     public int add(int a, int b) { return a + b; }
