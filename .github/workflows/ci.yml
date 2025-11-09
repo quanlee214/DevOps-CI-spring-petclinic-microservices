@@ -49,40 +49,59 @@ jobs:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      # Remove shell-based service check, rely on matrix and workflow expressions only
+
       - name: Set up JDK 17
         if: contains(needs.detect-changes.outputs.changed_services, matrix.service)
         uses: actions/setup-java@v3
         with:
           java-version: '17'
           distribution: 'temurin'
+
       - name: Validate
         if: contains(needs.detect-changes.outputs.changed_services, matrix.service)
         run: cd ${{ matrix.service }} && mvn validate
+
       - name: Build
         if: contains(needs.detect-changes.outputs.changed_services, matrix.service)
         run: ./mvnw -pl ${{ matrix.service }} -am clean compile
-      - name: Test & Coverage
+
+      - name: Test & Generate JaCoCo Report
         if: contains(needs.detect-changes.outputs.changed_services, matrix.service) && matrix.service != 'spring-petclinic-admin-server' && matrix.service != 'spring-petclinic-genai-service'
         run: ./mvnw -pl ${{ matrix.service }} test jacoco:report
-      - name: Check Coverage > 70%
+
+      - name: Check Coverage > 70% (based on real JaCoCo metrics)
         if: contains(needs.detect-changes.outputs.changed_services, matrix.service) && matrix.service != 'spring-petclinic-admin-server' && matrix.service != 'spring-petclinic-genai-service'
         run: |
-          COVERED=$(grep -oP 'covered="\K\d+' ${{ matrix.service }}/target/site/jacoco/jacoco.xml | head -1)
-          MISSED=$(grep -oP 'missed="\K\d+' ${{ matrix.service }}/target/site/jacoco/jacoco.xml | head -1)
-          TOTAL=$((COVERED + MISSED))
+          REPORT="${{ matrix.service }}/target/site/jacoco/jacoco.xml"
+          if [ ! -f "$REPORT" ]; then
+            echo "❌ Coverage report not found for ${{ matrix.service }}"
+            exit 1
+          fi
+
+          # Extract missed & covered for LINE counters (real JaCoCo metric)
+          MISSED=$(grep '<counter type="LINE"' "$REPORT" | sed -E 's/.*missed="([0-9]+)".*/\1/')
+          COVERED=$(grep '<counter type="LINE"' "$REPORT" | sed -E 's/.*covered="([0-9]+)".*/\1/')
+
+          TOTAL_MISSED=0
+          TOTAL_COVERED=0
+          for m in $MISSED; do TOTAL_MISSED=$((TOTAL_MISSED + m)); done
+          for c in $COVERED; do TOTAL_COVERED=$((TOTAL_COVERED + c)); done
+
+          TOTAL=$((TOTAL_MISSED + TOTAL_COVERED))
           if [ "$TOTAL" -eq 0 ]; then
             PERCENT=0
           else
-            PERCENT=$((COVERED * 100 / TOTAL))
+            PERCENT=$((TOTAL_COVERED * 100 / TOTAL))
           fi
-          echo "Coverage: $PERCENT%"
+
+          echo "📊 ${{ matrix.service }}: Line Coverage = $PERCENT% ($TOTAL_COVERED / $TOTAL)"
           if [ "$PERCENT" -lt 70 ]; then
-            echo "Coverage $PERCENT% is less than 70%"
+            echo "❌ Coverage $PERCENT% is below threshold (70%)"
             exit 1
           else
-            exit 0
+            echo "✅ Coverage check passed"
           fi
+
       - name: Archive JAR
         if: contains(needs.detect-changes.outputs.changed_services, matrix.service)
         uses: actions/upload-artifact@v4
