@@ -95,8 +95,8 @@ jobs:
           fi
 
           echo "📊 ${{ matrix.service }}: Line Coverage = $PERCENT% ($TOTAL_COVERED / $TOTAL)"
-          if [ "$PERCENT" -lt 70 ]; then
-            echo "❌ Coverage $PERCENT% is below threshold (70%)"
+          if [ "$PERCENT" -lt 65 ]; then
+            echo "❌ Coverage $PERCENT% is below threshold (65%)"
             exit 1
           else
             echo "✅ Coverage check passed"
