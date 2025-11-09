@@ -57,6 +57,28 @@ class PetResourceTest {
             .andExpect(jsonPath("$.type.id").value(6));
     }
 
+        @Test
+        void shouldReturnNotFoundForMissingPet() throws Exception {
+            given(petRepository.findById(99)).willReturn(Optional.empty());
+
+            mvc.perform(get("/owners/2/pets/99").accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound());
+        }
+
+        @Test
+        void shouldGetPetWithDifferentType() throws Exception {
+            Pet pet = setupPet();
+            PetType newType = new PetType();
+            newType.setId(7);
+            pet.setType(newType);
+
+            given(petRepository.findById(2)).willReturn(Optional.of(pet));
+
+            mvc.perform(get("/owners/2/pets/2").accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.type.id").value(7));
+        }
+
     private Pet setupPet() {
         Owner owner = new Owner();
         owner.setFirstName("George");
