@@ -57,6 +57,58 @@ class PetResourceTest {
             .andExpect(jsonPath("$.type.id").value(6));
     }
         @Test
+        void shouldReturnNotFoundWhenOwnerMissingOnCreate() throws Exception {
+            given(ownerRepository.findById(99)).willReturn(Optional.empty());
+
+            String json = """
+                {
+                    \"id\": 2,
+                    \"birthDate\": \"2020-01-01\",
+                    \"name\": \"Basil\",
+                    \"typeId\": 6
+                }
+                """;
+
+            mvc.perform(
+                org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/owners/99/pets")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(json)
+            ).andExpect(status().isNotFound());
+        }
+
+        @Test
+        void shouldUpdatePet() throws Exception {
+            Pet pet = setupPet();
+            given(petRepository.findById(2)).willReturn(Optional.of(pet));
+            PetType type = new PetType();
+            type.setId(6);
+            given(petRepository.findPetTypeById(6)).willReturn(Optional.of(type));
+            given(petRepository.save(org.mockito.ArgumentMatchers.any(Pet.class))).willReturn(pet);
+
+            String json = """
+                {
+                    \"id\": 2,
+                    \"birthDate\": \"2020-01-01\",
+                    \"name\": \"BasilUpdated\",
+                    \"typeId\": 6
+                }
+                """;
+
+            mvc.perform(
+                org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/owners/1/pets/2")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(json)
+            ).andExpect(status().isNoContent());
+        }
+
+        @Test
+        void shouldReturnNotFoundWhenPetMissingOnFind() throws Exception {
+            given(petRepository.findById(99)).willReturn(Optional.empty());
+
+            mvc.perform(get("/owners/2/pets/99").accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound());
+        }
+        @Test
         void shouldGetPetTypes() throws Exception {
             PetType type1 = new PetType();
             type1.setId(1);
