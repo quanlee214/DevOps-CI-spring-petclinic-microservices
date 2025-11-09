@@ -20,7 +20,7 @@
     </properties>
 
     <dependencies>
-        <!-- Spring Boot 123 45 -->
+        <!-- Spring Boot 123 456 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>

@@ -22,7 +22,7 @@
     </properties>
 
     <dependencies>
-        <!-- Spring Boot 123456789 -->
+        <!-- Spring Boot 12345678910 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter</artifactId>
