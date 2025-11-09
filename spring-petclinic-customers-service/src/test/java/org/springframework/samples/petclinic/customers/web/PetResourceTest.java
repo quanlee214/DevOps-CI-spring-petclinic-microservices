@@ -56,6 +56,67 @@ class PetResourceTest {
             .andExpect(jsonPath("$.name").value("Basil"))
             .andExpect(jsonPath("$.type.id").value(6));
     }
+        @Test
+        void shouldGetPetTypes() throws Exception {
+            PetType type1 = new PetType();
+            type1.setId(1);
+            type1.setName("Dog");
+            PetType type2 = new PetType();
+            type2.setId(2);
+            type2.setName("Cat");
+
+            given(petRepository.findPetTypes()).willReturn(java.util.List.of(type1, type2));
+
+            mvc.perform(get("/petTypes").accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(1))
+                .andExpect(jsonPath("$[1].name").value("Cat"));
+        }
+
+        @Test
+        void shouldCreatePet() throws Exception {
+            Owner owner = new Owner();
+            owner.setId(1);
+            given(ownerRepository.findById(1)).willReturn(Optional.of(owner));
+
+            PetType type = new PetType();
+            type.setId(6);
+            given(petRepository.findPetTypeById(6)).willReturn(Optional.of(type));
+
+            Pet pet = new Pet();
+            pet.setId(2);
+            pet.setName("Basil");
+            pet.setType(type);
+            pet.setBirthDate(new java.util.Date());
+
+            given(petRepository.save(org.mockito.ArgumentMatchers.any(Pet.class))).willReturn(pet);
+
+            String json = """
+                {
+                    \"id\": 2,
+                    \"birthDate\": \"2020-01-01\",
+                    \"name\": \"Basil\",
+                    \"typeId\": 6
+                }
+                """;
+
+            mvc.perform(
+                org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/owners/1/pets")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(json)
+            ).andExpect(status().isCreated());
+        }
+
+        @Test
+        void shouldReturnPetDetails() throws Exception {
+            Pet pet = setupPet();
+            given(petRepository.findById(2)).willReturn(Optional.of(pet));
+
+            mvc.perform(get("/owners/2/pets/2").accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(2))
+                .andExpect(jsonPath("$.name").value("Basil"));
+        }
 
         @Test
         void shouldReturnNotFoundForMissingPet() throws Exception {
