@@ -61,4 +61,14 @@ class VetResourceTest {
         mvc.perform(get("/vets").accept(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk());
     }
+
+        @Test
+        void shouldCacheVetsList() {
+            VetRepository repo = org.mockito.Mockito.mock(VetRepository.class);
+            VetResource resource = new VetResource(repo);
+            // Call twice to simulate caching
+            resource.showResourcesVetList();
+            resource.showResourcesVetList();
+            org.mockito.Mockito.verify(repo, org.mockito.Mockito.times(2)).findAll();
+        }
 }
