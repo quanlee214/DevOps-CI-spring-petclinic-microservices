@@ -46,10 +46,4 @@ class VetResource {
     public List<Vet> showResourcesVetList() {
         return vetRepository.findAll();
     }
-
-        // Method mới để tăng coverage
-        public int countVets() {
-            List<Vet> vets = vetRepository.findAll();
-            return vets != null ? vets.size() : 0;
-        }
 }
