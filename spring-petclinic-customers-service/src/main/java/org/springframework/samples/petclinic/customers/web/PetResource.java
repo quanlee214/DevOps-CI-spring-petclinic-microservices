@@ -15,10 +15,7 @@
  */
 package org.springframework.samples.petclinic.customers.web;
 
-import io.micrometer.core.annotation.Timed;
 import jakarta.validation.constraints.Min;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.samples.petclinic.customers.model.*;
 import org.springframework.web.bind.annotation.*;
@@ -33,10 +30,7 @@ import java.util.List;
  * @author Ramazan Sakin
  */
 @RestController
-@Timed("petclinic.pet")
 class PetResource {
-
-    private static final Logger log = LoggerFactory.getLogger(PetResource.class);
 
     private final PetRepository petRepository;
     private final OwnerRepository ownerRepository;
@@ -81,7 +75,6 @@ class PetResource {
         petRepository.findPetTypeById(petRequest.typeId())
             .ifPresent(pet::setType);
 
-        log.info("Saving pet {}", pet);
         return petRepository.save(pet);
     }
 

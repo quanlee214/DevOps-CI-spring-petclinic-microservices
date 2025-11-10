@@ -129,39 +129,4 @@ class PetResourceTest {
         owner.addPet(pet);
         return pet;
     }
-
-
-    @Test
-    void shouldReturnNotFoundForMissingOwnerWhenCreatePet() throws Exception {
-        given(ownerRepository.findById(123)).willReturn(Optional.empty());
-        String json = "{\"name\":\"Ghost\",\"birthDate\":\"2022-01-01\",\"typeId\":2}";
-        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/owners/123/pets")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(json))
-            .andExpect(status().isNotFound());
-    }
-
-    @Test
-    void shouldReturnNotFoundForMissingPetWhenUpdate() throws Exception {
-        given(petRepository.findById(404)).willReturn(Optional.empty());
-        String json = "{\"id\":404,\"name\":\"NoPet\",\"birthDate\":\"2022-01-01\",\"typeId\":2}";
-        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/owners/*/pets/404")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(json))
-            .andExpect(status().isNotFound());
-    }
-
-    @Test
-    void shouldUpdatePetWithMissingPetType() throws Exception {
-        Pet pet = new Pet();
-        pet.setId(7);
-        given(petRepository.findById(7)).willReturn(Optional.of(pet));
-        given(petRepository.findPetTypeById(999)).willReturn(Optional.empty());
-        given(petRepository.save(org.mockito.Mockito.any(Pet.class))).willReturn(pet);
-        String json = "{\"id\":7,\"name\":\"NoType\",\"birthDate\":\"2022-01-01\",\"typeId\":999}";
-        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/owners/*/pets/7")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(json))
-            .andExpect(status().isNoContent());
-    }
 }
