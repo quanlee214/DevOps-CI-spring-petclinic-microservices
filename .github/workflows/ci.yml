@@ -6,11 +6,6 @@ on:
   pull_request:
     branches: [main, develop, feature/**]
 
-# Permissions needed to push images to GitHub Container Registry (ghcr.io)
-permissions:
-  contents: read
-  packages: write
-
 jobs:
   detect-changes:
     runs-on: ubuntu-latest
@@ -107,42 +102,9 @@ jobs:
             echo "✅ Coverage check passed"
           fi
 
-      - name: Package JAR (skip tests)
-        if: contains(needs.detect-changes.outputs.changed_services, matrix.service)
-        run: ./mvnw -pl ${{ matrix.service }} -am -DskipTests package
-
       - name: Archive JAR
         if: contains(needs.detect-changes.outputs.changed_services, matrix.service)
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.service }}-jar
           path: ${{ matrix.service }}/target/*.jar
-
-      # Build & push Docker image for the changed service (simple generic Dockerfile)
-      - name: Prepare Dockerfile
-        if: contains(needs.detect-changes.outputs.changed_services, matrix.service)
-        run: |
-          cat > ${{ matrix.service }}/Dockerfile <<'EOF'
-          FROM eclipse-temurin:17-jre-alpine
-          ARG JAR_FILE=target/*.jar
-          COPY ${JAR_FILE} app.jar
-          EXPOSE 8080
-          ENTRYPOINT ["java","-jar","/app.jar"]
-          EOF
-
-      - name: Login to GHCR
-        if: contains(needs.detect-changes.outputs.changed_services, matrix.service)
-        run: echo "${GITHUB_TOKEN}" | docker login ghcr.io -u "${GITHUB_ACTOR}" --password-stdin
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build & Push Image
-        if: contains(needs.detect-changes.outputs.changed_services, matrix.service)
-        run: |
-          IMAGE_NAME="ghcr.io/${{ github.repository_owner }}/petclinic-${{ matrix.service }}"
-          BRANCH_TAG=$(echo "${{ github.ref_name }}" | tr '/' '-')
-          docker build -t ${IMAGE_NAME}:${{ github.sha }} -t ${IMAGE_NAME}:${BRANCH_TAG} ${{ matrix.service }}
-          docker push ${IMAGE_NAME}:${{ github.sha }}
-          docker push ${IMAGE_NAME}:${BRANCH_TAG}
-        env:
-          DOCKER_BUILDKIT: 1
