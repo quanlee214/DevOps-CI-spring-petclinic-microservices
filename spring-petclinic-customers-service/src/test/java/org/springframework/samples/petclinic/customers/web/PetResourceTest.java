@@ -57,6 +57,61 @@ class PetResourceTest {
             .andExpect(jsonPath("$.type.id").value(6));
     }
 
+        @Test
+    void shouldReturnPetTypes() throws Exception {
+        PetType type = new PetType();
+        type.setId(1);
+        type.setName("Dog");
+        given(petRepository.findPetTypes()).willReturn(java.util.Arrays.asList(type));
+        mvc.perform(get("/petTypes").accept(MediaType.APPLICATION_JSON))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$[0].id").value(1))
+            .andExpect(jsonPath("$[0].name").value("Dog"));
+    }
+
+    @Test
+    void shouldCreatePet() throws Exception {
+        Owner owner = new Owner();
+        java.lang.reflect.Field idField = Owner.class.getDeclaredField("id");
+        idField.setAccessible(true);
+        idField.set(owner, 1);
+        given(ownerRepository.findById(1)).willReturn(Optional.of(owner));
+        PetType type = new PetType();
+        type.setId(2);
+        given(petRepository.findPetTypeById(2)).willReturn(Optional.of(type));
+        Pet pet = new Pet();
+        pet.setId(10);
+        given(petRepository.save(org.mockito.Mockito.any(Pet.class))).willReturn(pet);
+        String json = "{\"name\":\"Tom\",\"birthDate\":\"2020-01-01\",\"typeId\":2}";
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/owners/1/pets")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(json))
+            .andExpect(status().isCreated());
+    }
+
+    @Test
+    void shouldUpdatePet() throws Exception {
+        Pet pet = new Pet();
+        pet.setId(5);
+        given(petRepository.findById(5)).willReturn(Optional.of(pet));
+        PetType type = new PetType();
+        type.setId(3);
+        given(petRepository.findPetTypeById(3)).willReturn(Optional.of(type));
+        given(petRepository.save(org.mockito.Mockito.any(Pet.class))).willReturn(pet);
+        String json = "{\"id\":5,\"name\":\"Jerry\",\"birthDate\":\"2021-02-02\",\"typeId\":3}";
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/owners/*/pets/5")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(json))
+            .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void shouldReturnNotFoundForMissingPet() throws Exception {
+        given(petRepository.findById(99)).willReturn(Optional.empty());
+        mvc.perform(get("/owners/2/pets/99").accept(MediaType.APPLICATION_JSON))
+            .andExpect(status().isNotFound());
+    }
+
     private Pet setupPet() {
         Owner owner = new Owner();
         owner.setFirstName("George");
@@ -74,4 +129,6 @@ class PetResourceTest {
         owner.addPet(pet);
         return pet;
     }
+
+    
 }
