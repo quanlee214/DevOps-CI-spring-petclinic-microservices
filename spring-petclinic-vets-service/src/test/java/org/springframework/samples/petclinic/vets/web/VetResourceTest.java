@@ -59,4 +59,14 @@ class VetResourceTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$[0].id").value(1));
     }
+
+    @Test
+    void shouldCountVets() {
+        Vet vet1 = new Vet();
+        Vet vet2 = new Vet();
+        given(vetRepository.findAll()).willReturn(asList(vet1, vet2));
+        VetResource resource = new VetResource(vetRepository);
+        int count = resource.countVets();
+        org.junit.jupiter.api.Assertions.assertEquals(2, count);
+    }
 }
