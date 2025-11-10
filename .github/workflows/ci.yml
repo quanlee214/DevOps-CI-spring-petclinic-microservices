@@ -69,7 +69,7 @@ jobs:
         if: contains(needs.detect-changes.outputs.changed_services, matrix.service) && matrix.service != 'spring-petclinic-admin-server' && matrix.service != 'spring-petclinic-genai-service'
         run: ./mvnw -pl ${{ matrix.service }} test jacoco:report
 
-      - name: Check Coverage > 70% (based on real JaCoCo metrics)
+      - name: Check Coverage > 65% (based on real JaCoCo metrics)
         if: contains(needs.detect-changes.outputs.changed_services, matrix.service) && matrix.service != 'spring-petclinic-admin-server' && matrix.service != 'spring-petclinic-genai-service'
         run: |
           REPORT="${{ matrix.service }}/target/site/jacoco/jacoco.xml"
