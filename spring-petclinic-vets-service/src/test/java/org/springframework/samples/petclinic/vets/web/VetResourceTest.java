@@ -40,6 +40,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(VetResource.class)
 @ActiveProfiles("test")
 class VetResourceTest {
+    @Test
+    void shouldInstantiateVetResource() {
+        VetRepository repo = org.mockito.Mockito.mock(VetRepository.class);
+        VetResource resource = new VetResource(repo);
+        org.junit.jupiter.api.Assertions.assertNotNull(resource);
+    }
 
     @Autowired
     MockMvc mvc;
