@@ -107,6 +107,10 @@ jobs:
             echo "✅ Coverage check passed"
           fi
 
+      - name: Package JAR (skip tests)
+        if: contains(needs.detect-changes.outputs.changed_services, matrix.service)
+        run: ./mvnw -pl ${{ matrix.service }} -am -DskipTests package
+
       - name: Archive JAR
         if: contains(needs.detect-changes.outputs.changed_services, matrix.service)
         uses: actions/upload-artifact@v4
