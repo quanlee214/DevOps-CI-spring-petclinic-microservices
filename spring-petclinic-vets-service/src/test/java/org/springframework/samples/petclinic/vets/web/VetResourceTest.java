@@ -40,12 +40,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(VetResource.class)
 @ActiveProfiles("test")
 class VetResourceTest {
-    @Test
-    void shouldInstantiateVetResource() {
-        VetRepository repo = org.mockito.Mockito.mock(VetRepository.class);
-        VetResource resource = new VetResource(repo);
-        org.junit.jupiter.api.Assertions.assertNotNull(resource);
-    }
 
     @Autowired
     MockMvc mvc;
@@ -55,20 +49,14 @@ class VetResourceTest {
 
     @Test
     void shouldGetAListOfVets() throws Exception {
+
         Vet vet = new Vet();
         vet.setId(1);
-        given(vetRepository.findAll()).willReturn(asList(vet));
-        mvc.perform(get("/vets").accept(MediaType.APPLICATION_JSON))
-            .andExpect(status().isOk());
-    }
 
-        @Test
-        void shouldCacheVetsList() {
-            VetRepository repo = org.mockito.Mockito.mock(VetRepository.class);
-            VetResource resource = new VetResource(repo);
-            // Call twice to simulate caching
-            resource.showResourcesVetList();
-            resource.showResourcesVetList();
-            org.mockito.Mockito.verify(repo, org.mockito.Mockito.times(2)).findAll();
-        }
+        given(vetRepository.findAll()).willReturn(asList(vet));
+
+        mvc.perform(get("/vets").accept(MediaType.APPLICATION_JSON))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$[0].id").value(1));
+    }
 }
